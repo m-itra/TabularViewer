@@ -7,33 +7,34 @@ from src.input.reader import InputError
 from src.parser import ParseError
 from src.renderer import TableWidthError
 
+ERROR_LABELS = {
+    InputError: "Ошибка ввода",
+    ParseError: "Ошибка разбора",
+    DateParseError: "Ошибка разбора даты",
+    TableWidthError: "Ошибка отрисовки таблицы",
+}
+
+HANDLED_ERRORS = tuple(ERROR_LABELS)
+
+
+def format_error(error: Exception) -> str:
+    for error_type, label in ERROR_LABELS.items():
+        if isinstance(error, error_type):
+            return f"{label}: {error}"
+
+    return f"Ошибка: {error}"
+
 
 def main():
     args = parse_args(sys.argv[1:])
 
     try:
-        table = render_table(
-            args.input,
-            start_line=args.start_line,
-            limit=args.limit,
-        )
-        print(table)
-    except InputError as error:
-        print(f"Ошибка ввода: {error}", file=sys.stderr)
-        return 1
-    except ParseError as error:
-        print(f"Ошибка разбора: {error}", file=sys.stderr)
-        return 1
-    except DateParseError as error:
-        print(f"Ошибка разбора даты: {error}", file=sys.stderr)
-        return 1
-    except TableWidthError as error:
-        print(f"Ошибка отрисовки таблицы: {error}", file=sys.stderr)
-        return 1
-    except OSError as error:
-        print(f"Ошибка ввода-вывода: {error}", file=sys.stderr)
+        table = render_table(args.input, start_line=args.start_line, limit=args.limit)
+    except HANDLED_ERRORS as error:
+        print(format_error(error), file=sys.stderr)
         return 1
 
+    print(table)
     return 0
 
 
